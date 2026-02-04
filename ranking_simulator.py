@@ -36,17 +36,6 @@ search_term = st.sidebar.selectbox(
     (df["search_term"].unique())
 )
 
-
-brand_filter = st.sidebar.selectbox(
-    "Search Term",
-    (df["brand_name"].unique())
-)
-
-category_filter = st.sidebar.multiselect(
-    "L3 Category",
-    (df["l3_category_name"].unique())
-)
-
 top_k = st.sidebar.slider(
     "Top K",
     min_value=5,
