@@ -33,7 +33,6 @@ subset["rank_A"] = subset["rnk"]
 # ---- New Equation ----
 subset["score_B"] = (
     subset["ranking_score"]*(1+w_asp * subset["asp_boost"])
-    + w_mul * subset["mulpitlier1"]
 )
 
 subset["rank_B"] = subset["score_B"].rank(
