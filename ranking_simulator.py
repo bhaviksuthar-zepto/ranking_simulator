@@ -36,8 +36,9 @@ search_term = st.sidebar.selectbox(
     sorted(df["search_term"].unique())
 )
 
-brand_filter = st.sidebar.multiselect(
-    "Brand Name",
+
+brand_filter = st.sidebar.selectbox(
+    "Search Term",
     sorted(df["brand_name"].unique())
 )
 
