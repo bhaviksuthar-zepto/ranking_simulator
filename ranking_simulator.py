@@ -13,7 +13,7 @@ st.sidebar.title("Ranking Simulator")
 # ---- Controls ----
 query = st.sidebar.selectbox(
     "Search Term",
-    options=df["search_term"]
+    options=df["search_term"],unique()
 )
 
 w_asp = st.sidebar.slider("ASP Boost Weight", -2.0, 2.0, 1.0, 0.1)
