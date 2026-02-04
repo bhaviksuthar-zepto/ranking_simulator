@@ -60,7 +60,7 @@ cols = [
 ]
 
 st.dataframe(
-    subset.sort_values("rank_B")
+    subset.sort_values("rank_A")
           .head(top_k)[cols],
     use_container_width=True
 )
