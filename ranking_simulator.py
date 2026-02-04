@@ -22,7 +22,7 @@ st.title("🔁 Ranking Simulation & Comparison Tool")
 # -----------------------------
 @st.cache_data
 def load_data():
-    return pd.read_csv("ranking_base_file.csv.csv")
+    return pd.read_csv("ranking_base_file.csv")
 
 df = load_data()
 #df["asp_boost"] = df["asp_boost"].fillna(0.0)
