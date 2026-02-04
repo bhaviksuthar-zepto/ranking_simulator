@@ -36,7 +36,10 @@ search_term = st.sidebar.selectbox(
     "Search Term",
     (df["search_term"].unique())
 )
-
+cohort_filter = st.sidebar.selectbox(
+    "Ranking Cohort",
+    (df["ranking_cohort"].dropna().astype(str).unique())
+)
 top_k = st.sidebar.slider(
     "Top K",
     min_value=5,
@@ -49,7 +52,10 @@ top_k = st.sidebar.slider(
 # Apply Filters
 # -----------------------------
 filtered_df = df[df["search_term"] == search_term]
-
+if cohort_filter:
+    filtered_df = filtered_df[
+        filtered_df["ranking_cohort"].astype(str).isin(cohort_filter)
+    ]
 if filtered_df.empty:
     st.warning("No data available for selected filters")
     st.stop()
