@@ -57,7 +57,7 @@ top_k = st.sidebar.slider(
 # Apply Filters
 # -----------------------------
 filtered_df = df[df["search_term"] == search_term]
-filtered_df = df[df["ranking_cohort"] == cohort_filter]
+filtered_df = filtered_df[filtered_df["ranking_cohort"] == cohort_filter]
 
 if filtered_df.empty:
     st.warning("No data available for selected filters")
