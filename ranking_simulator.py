@@ -1,11 +1,11 @@
 # =========================================================
-# Ranking Simulation Tool - Streamlit App
+# Ranking Simulation Tool - Streamlit App (Safe Eval Version)
 # =========================================================
 
 import streamlit as st
 import pandas as pd
-import numpy as np
-import numexpr as ne
+import ast
+import operator as op
 
 # -----------------------------
 # Page Config
@@ -92,123 +92,40 @@ st.sidebar.markdown(
     - ranking_score
     - asp_boost
     - pop_boost
+
+    **Allowed operators**
+    +  -  *  /  ()
     """
 )
 
 # -----------------------------
-# Safe Formula Evaluation
+# Safe Expression Evaluator
 # -----------------------------
-def evaluate_formula(df, expr):
-    local_dict = {
-        "ranking_score": df["ranking_score"].values,
-        "asp_boost": df["asp_boost"].values,
-        "pop_boost": df["pop_boost"].values,
-    }
-    return ne.evaluate(expr, local_dict)
+ALLOWED_OPERATORS = {
+    ast.Add: op.add,
+    ast.Sub: op.sub,
+    ast.Mult: op.mul,
+    ast.Div: op.truediv,
+}
 
-try:
-    df_sim = filtered_df.copy()
+def safe_eval_expr(expr, variables):
+    def _eval(node):
+        if isinstance(node, ast.Constant):  # numbers
+            return node.value
 
-    df_sim["score_a"] = evaluate_formula(df_sim, formula_a)
-    df_sim["score_b"] = evaluate_formula(df_sim, formula_b)
+        elif isinstance(node, ast.Name):  # variables
+            if node.id not in variables:
+                raise ValueError(f"Unknown variable: {node.id}")
+            return variables[node.id]
 
-except Exception as e:
-    st.error(f"❌ Error in formula evaluation: {e}")
-    st.stop()
+        elif isinstance(node, ast.BinOp):  # binary operations
+            if type(node.op) not in ALLOWED_OPERATORS:
+                raise TypeError("Operator not allowed")
+            return ALLOWED_OPERATORS[type(node.op)](
+                _eval(node.left),
+                _eval(node.right)
+            )
 
-# -----------------------------
-# Rank Computation
-# -----------------------------
-df_sim["rank_a"] = df_sim["score_a"].rank(
-    method="first", ascending=False
-)
-
-df_sim["rank_b"] = df_sim["score_b"].rank(
-    method="first", ascending=False
-)
-
-df_sim["rank_delta"] = df_sim["rank_b"] - df_sim["rank_a"]
-
-# -----------------------------
-# Top-K Selection
-# -----------------------------
-topk_df = df_sim[
-    (df_sim["rank_a"] <= top_k) | (df_sim["rank_b"] <= top_k)
-].sort_values("rank_a")
-
-# -----------------------------
-# Display Ranking Table
-# -----------------------------
-st.subheader("📊 Ranking Comparison")
-
-display_cols = [
-    "product_variant_id",
-    "product_name",
-    "brand_name",
-    "l3_category_name",
-    "selling_price",
-    "ranking_cohort",
-    "rank_a",
-    "rank_b",
-    "rank_delta"
-]
-
-st.dataframe(
-    topk_df[display_cols]
-        .sort_values("rank_a")
-        .reset_index(drop=True),
-    use_container_width=True
-)
-
-# -----------------------------
-# Summary Metrics
-# -----------------------------
-st.subheader("📈 Summary Metrics")
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    overlap = len(
-        set(df_sim[df_sim["rank_a"] <= top_k]["product_variant_id"])
-        & set(df_sim[df_sim["rank_b"] <= top_k]["product_variant_id"])
-    )
-    st.metric("Top-K Overlap", f"{overlap}/{top_k}")
-
-with col2:
-    avg_rank_shift = df_sim["rank_delta"].abs().mean()
-    st.metric("Avg |Rank Change|", f"{avg_rank_shift:.2f}")
-
-with col3:
-    improved = (df_sim["rank_delta"] < 0).sum()
-    st.metric("Products Improved", improved)
-
-with col4:
-    worsened = (df_sim["rank_delta"] > 0).sum()
-    st.metric("Products Dropped", worsened)
-
-# -----------------------------
-# Rank Delta Distribution
-# -----------------------------
-st.subheader("📉 Rank Change Distribution")
-
-rank_delta_counts = (
-    df_sim["rank_delta"]
-    .value_counts()
-    .sort_index()
-)
-
-st.bar_chart(rank_delta_counts)
-
-# -----------------------------
-# Download Results
-# -----------------------------
-st.subheader("⬇️ Download")
-
-csv = topk_df.to_csv(index=False).encode("utf-8")
-
-st.download_button(
-    label="Download Ranking Comparison CSV",
-    data=csv,
-    file_name="ranking_simulation_output.csv",
-    mime="text/csv"
-)
+        elif isinstance(node, ast.UnaryOp):  # -x
+            if isinstance(node.op, ast.USub):
+                return -_eval(nod_
