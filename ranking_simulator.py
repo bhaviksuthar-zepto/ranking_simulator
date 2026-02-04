@@ -24,7 +24,12 @@ st.title("🔁 Ranking Simulation & Comparison Tool")
 def load_data():
     return pd.read_csv("ranking_base_file.csv")
 
+
 df = load_data()
+
+if "ranking_cohort" not in df.columns:
+    df["ranking_cohort"] = "Unknown"
+    
 #df["asp_boost"] = df["asp_boost"].fillna(0.0)
 #df["pop_boost"] = df["pop_boost"].fillna(0.0)
 # -----------------------------
