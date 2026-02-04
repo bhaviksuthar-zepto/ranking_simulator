@@ -12,10 +12,10 @@ df = load_data()
 st.sidebar.title("Ranking Simulator")
 
 # ---- Controls ----
-query = st.sidebar.text_input("Search Term", "milk")
+query = st.sidebar.selectbox("Search Term", ["milk","oil","chocolate","milk","shampoo"] )
 
-w_asp = st.sidebar.slider("ASP Boost Weight", -2.0, 2.0, 1.0, 0.1)
-w_mul = st.sidebar.slider("Multiplier Weight", -2.0, 2.0, 1.0, 0.1)
+w_asp = st.sidebar.slider("ASP Boost Weight", -0.5, 1, 1.5, 2, 2.5)
+
 
 top_k = st.sidebar.selectbox("Top K", [10, 20, 50])
 
@@ -32,8 +32,7 @@ subset["rank_A"] = subset["rnk"]
 
 # ---- New Equation ----
 subset["score_B"] = (
-    subset["ranking_score"]
-    + w_asp * subset["asp_boost"]
+    subset["ranking_score"]*(1+w_asp * subset["asp_boost"])
     + w_mul * subset["mulpitlier1"]
 )
 
