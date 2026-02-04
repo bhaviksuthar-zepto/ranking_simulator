@@ -33,18 +33,18 @@ st.sidebar.header("🔍 Filters")
 
 search_term = st.sidebar.selectbox(
     "Search Term",
-    sorted(df["search_term"].unique())
+    (df["search_term"].unique())
 )
 
 
 brand_filter = st.sidebar.selectbox(
     "Search Term",
-    sorted(df["brand_name"].unique())
+    (df["brand_name"].unique())
 )
 
 category_filter = st.sidebar.multiselect(
     "L3 Category",
-    sorted(df["l3_category_name"].unique())
+    (df["l3_category_name"].unique())
 )
 
 top_k = st.sidebar.slider(
