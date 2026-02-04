@@ -183,7 +183,9 @@ display_cols = [
     "ranking_cohort",
     "rank_a",
     "rank_b",
-    "rank_delta"
+    "rank_delta",
+    "pop_boost",
+    "asp_boost"
 ]
 
 st.dataframe(
