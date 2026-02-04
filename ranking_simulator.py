@@ -49,12 +49,6 @@ top_k = st.sidebar.slider(
 # -----------------------------
 filtered_df = df[df["search_term"] == search_term]
 
-if brand_filter:
-    filtered_df = filtered_df[filtered_df["brand_name"].isin(brand_filter)]
-
-if category_filter:
-    filtered_df = filtered_df[filtered_df["l3_category_name"].isin(category_filter)]
-
 if filtered_df.empty:
     st.warning("No data available for selected filters")
     st.stop()
