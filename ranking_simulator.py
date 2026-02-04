@@ -25,7 +25,8 @@ def load_data():
     return pd.read_csv("base_file.csv")
 
 df = load_data()
-
+df["asp_boost"] = df["asp_boost"].fillna(0.0)
+df["pop_boost"] = df["pop_boost"].fillna(0.0)
 # -----------------------------
 # Sidebar Filters
 # -----------------------------
