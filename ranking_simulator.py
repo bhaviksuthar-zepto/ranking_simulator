@@ -1,5 +1,5 @@
 # =========================================================
-# Ranking Simulation Tool - Streamlit App (Safe Eval Version)
+# Ranking Simulation Tool - Streamlit App (FINAL STABLE)
 # =========================================================
 
 import streamlit as st
@@ -55,7 +55,7 @@ top_k = st.sidebar.slider(
 )
 
 # -----------------------------
-# Filter Data
+# Apply Filters
 # -----------------------------
 filtered_df = df[df["search_term"] == search_term]
 
@@ -88,14 +88,14 @@ formula_b = st.sidebar.text_area(
 
 st.sidebar.markdown(
     """
-    **Allowed variables**
-    - ranking_score
-    - asp_boost
-    - pop_boost
+**Allowed variables**
+- ranking_score
+- asp_boost
+- pop_boost
 
-    **Allowed operators**
-    +  -  *  /  ()
-    """
+**Allowed operators**
++  -  *  /  ( )
+"""
 )
 
 # -----------------------------
@@ -118,7 +118,7 @@ def safe_eval_expr(expr, variables):
                 raise ValueError(f"Unknown variable: {node.id}")
             return variables[node.id]
 
-        elif isinstance(node, ast.BinOp):  # binary operations
+        elif isinstance(node, ast.BinOp):  # a + b, a * b
             if type(node.op) not in ALLOWED_OPERATORS:
                 raise TypeError("Operator not allowed")
             return ALLOWED_OPERATORS[type(node.op)](
@@ -128,4 +128,134 @@ def safe_eval_expr(expr, variables):
 
         elif isinstance(node, ast.UnaryOp):  # -x
             if isinstance(node.op, ast.USub):
-                return -_eval(nod_
+                return -_eval(node.operand)
+            raise TypeError("Unary operator not allowed")
+
+        else:
+            raise TypeError("Unsupported expression")
+
+    parsed = ast.parse(expr, mode="eval")
+    return _eval(parsed.body)
+
+
+def evaluate_formula(df, expr):
+    return safe_eval_expr(
+        expr,
+        {
+            "ranking_score": df["ranking_score"],
+            "asp_boost": df["asp_boost"],
+            "pop_boost": df["pop_boost"],
+        }
+    )
+
+# -----------------------------
+# Compute Scores
+# -----------------------------
+try:
+    df_sim = filtered_df.copy()
+
+    df_sim["score_a"] = evaluate_formula(df_sim, formula_a)
+    df_sim["score_b"] = evaluate_formula(df_sim, formula_b)
+
+    # Guardrails
+    df_sim["score_a"] = df_sim["score_a"].clip(lower=0)
+    df_sim["score_b"] = df_sim["score_b"].clip(lower=0)
+
+except Exception as e:
+    st.error(f"❌ Formula Error: {e}")
+    st.stop()
+
+# -----------------------------
+# Rank Computation
+# -----------------------------
+df_sim["rank_a"] = df_sim["score_a"].rank(
+    method="first", ascending=False
+)
+
+df_sim["rank_b"] = df_sim["score_b"].rank(
+    method="first", ascending=False
+)
+
+df_sim["rank_delta"] = df_sim["rank_b"] - df_sim["rank_a"]
+
+# -----------------------------
+# Top-K Selection
+# -----------------------------
+topk_df = df_sim[
+    (df_sim["rank_a"] <= top_k) | (df_sim["rank_b"] <= top_k)
+].sort_values("rank_a")
+
+# -----------------------------
+# Display Ranking Table
+# -----------------------------
+st.subheader("📊 Ranking Comparison")
+
+display_cols = [
+    "product_variant_id",
+    "product_name",
+    "brand_name",
+    "l3_category_name",
+    "selling_price",
+    "ranking_cohort",
+    "rank_a",
+    "rank_b",
+    "rank_delta"
+]
+
+st.dataframe(
+    topk_df[display_cols]
+        .sort_values("rank_a")
+        .reset_index(drop=True),
+    use_container_width=True
+)
+
+# -----------------------------
+# Summary Metrics
+# -----------------------------
+st.subheader("📈 Summary Metrics")
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    overlap = len(
+        set(df_sim[df_sim["rank_a"] <= top_k]["product_variant_id"])
+        & set(df_sim[df_sim["rank_b"] <= top_k]["product_variant_id"])
+    )
+    st.metric("Top-K Overlap", f"{overlap}/{top_k}")
+
+with col2:
+    avg_shift = df_sim["rank_delta"].abs().mean()
+    st.metric("Avg |Rank Change|", f"{avg_shift:.2f}")
+
+with col3:
+    improved = (df_sim["rank_delta"] < 0).sum()
+    st.metric("Products Improved", improved)
+
+with col4:
+    dropped = (df_sim["rank_delta"] > 0).sum()
+    st.metric("Products Dropped", dropped)
+
+# -----------------------------
+# Rank Delta Distribution
+# -----------------------------
+st.subheader("📉 Rank Change Distribution")
+
+st.bar_chart(
+    df_sim["rank_delta"]
+        .value_counts()
+        .sort_index()
+)
+
+# -----------------------------
+# Download Results
+# -----------------------------
+st.subheader("⬇️ Download Results")
+
+csv = topk_df.to_csv(index=False).encode("utf-8")
+
+st.download_button(
+    label="Download Ranking Comparison CSV",
+    data=csv,
+    file_name="ranking_simulation_output.csv",
+    mime="text/csv"
+)
