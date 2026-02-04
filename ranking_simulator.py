@@ -220,15 +220,15 @@ with col1:
     st.metric("Top-K Overlap", f"{overlap}/{top_k}")
 
 with col2:
-    avg_shift = df_sim["rank_delta"].abs().mean()
+    avg_shift = topk_df["rank_delta"].abs().mean()
     st.metric("Avg |Rank Change|", f"{avg_shift:.2f}")
 
 with col3:
-    improved = (df_sim["rank_delta"] < 0).sum()
+    improved = (topk_df["rank_delta"] < 0).sum()
     st.metric("Products Improved", improved)
 
 with col4:
-    dropped = (df_sim["rank_delta"] > 0).sum()
+    dropped = (topk_df["rank_delta"] > 0).sum()
     st.metric("Products Dropped", dropped)
 
 # -----------------------------
