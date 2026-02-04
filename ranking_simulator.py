@@ -29,14 +29,12 @@ if subset.empty:
     st.stop()
 
 # ---- Baseline ----
-subset["score_A"] = subset["ranking_score"]
+subset["score_A"] = subset["ranking_score"]*(1+subset["mulpitlier1"])
 subset["rank_A"] = subset["rnk"]
 
 # ---- New Equation ----
 subset["score_B"] = (
-    subset["ranking_score"]
-    + w_asp * subset["asp_boost"]
-    + w_mul * subset["mulpitlier1"]
+    subset["ranking_score"]*(1+subset["mulpitlier1"])*(1+ w_asp * subset["asp_boost"])
 )
 
 subset["rank_B"] = subset["score_B"].rank(
