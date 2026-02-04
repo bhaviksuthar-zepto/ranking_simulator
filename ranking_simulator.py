@@ -11,7 +11,10 @@ df = load_data()
 st.sidebar.title("Ranking Simulator")
 
 # ---- Controls ----
-query = st.sidebar.text_input("Search Term", "milk")
+query = st.sidebar.selectbox(
+    "Search Term",
+    options=search_terms
+)
 
 w_asp = st.sidebar.slider("ASP Boost Weight", -2.0, 2.0, 1.0, 0.1)
 w_mul = st.sidebar.slider("Multiplier Weight", -2.0, 2.0, 1.0, 0.1)
