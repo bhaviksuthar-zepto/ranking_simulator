@@ -3,18 +3,70 @@ import pandas as pd
 import numpy as np
 
 st.write("Streamlit supports a wide range of data visualizations, including [Plotly, Altair, and Bokeh charts](https://docs.streamlit.io/develop/api-reference/charts). 📊 And with over 20 input widgets, you can easily make your data interactive!")
+@st.cache_data
+def load_data():
+    return pd.read_csv("base_file.csv")
 
-df = pd.read_csv("base_file.csv")
-all_users = ["Alice", "Bob", "Charly"]
-with st.container(border=True):
-    users = st.multiselect("Users", all_users, default=all_users)
-    rolling_average = st.toggle("Rolling average")
+df = load_data()
 
-np.random.seed(42)
-data = pd.DataFrame(np.random.randn(20, len(users)), columns=users)
-if rolling_average:
-    data = data.rolling(7).mean().dropna()
+st.sidebar.title("Ranking Simulator")
 
-tab1, tab2 = st.tabs(["Chart", "Dataframe"])
-tab1.line_chart(df, height=250)
-tab2.dataframe(df, height=250, use_container_width=True)
+# ---- Controls ----
+query = st.sidebar.text_input("Search Term", "milk")
+
+w_asp = st.sidebar.slider("ASP Boost Weight", -2.0, 2.0, 1.0, 0.1)
+w_mul = st.sidebar.slider("Multiplier Weight", -2.0, 2.0, 1.0, 0.1)
+
+top_k = st.sidebar.selectbox("Top K", [10, 20, 50])
+
+# ---- Filter Query ----
+subset = df[df["search_term"] == query].copy()
+
+if subset.empty:
+    st.warning("No products found for this query")
+    st.stop()
+
+# ---- Baseline ----
+subset["score_A"] = subset["ranking_score"]
+subset["rank_A"] = subset["rnk"]
+
+# ---- New Equation ----
+subset["score_B"] = (
+    subset["ranking_score"]
+    + w_asp * subset["asp_boost"]
+    + w_mul * subset["mulpitlier1"]
+)
+
+subset["rank_B"] = subset["score_B"].rank(
+    ascending=False,
+    method="first"
+)
+
+subset["delta_rank"] = subset["rank_A"] - subset["rank_B"]
+
+# ---- Display ----
+st.subheader(f"Ranking Comparison for '{query}'")
+
+cols = [
+    "product_name",
+    "brand_name",
+    "rank_A",
+    "rank_B",
+    "delta_rank",
+    "asp_boost",
+    "mulpitlier1"
+]
+
+st.dataframe(
+    subset.sort_values("rank_B")
+          .head(top_k)[cols],
+    use_container_width=True
+)
+
+# ---- Summary Metrics ----
+moved_up = (subset["delta_rank"] > 0).sum()
+moved_down = (subset["delta_rank"] < 0).sum()
+
+st.metric("Products Moved Up", moved_up)
+st.metric("Products Moved Down", moved_down)
+
