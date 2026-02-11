@@ -6,6 +6,15 @@ import streamlit as st
 import pandas as pd
 import ast
 import operator as op
+#from databricks import sql
+import os
+
+#databricks_token = os.environ.get("DATABRICKS_TOKEN")
+
+#connection = sql.connect(
+ #                       server_hostname = "zepto-ds-prod.cloud.databricks.com",
+  #                      http_path = "/sql/1.0/warehouses/c9d51cc865edefd5",
+   #                     access_token = databricks_token)
 
 # -----------------------------
 # Page Config
@@ -20,9 +29,11 @@ st.title("🔁 Ranking Simulation & Comparison Tool")
 # -----------------------------
 # Load Data
 # -----------------------------
+#"gold.product.search_ranking_simulator"
 @st.cache_data
 def load_data():
-    return pd.read_csv("ranking_base_file.csv")
+#    return pd.read_sql("SELECT * FROM gold.product.search_ranking_simulator", connection)
+   return pd.read_csv("ranking_base_file.csv")
 
 
 df = load_data()
@@ -70,13 +81,13 @@ st.sidebar.header("🧮 Ranking Formulas")
 
 formula_a = st.sidebar.text_area(
     "Formula A",
-    value="ranking_score * (1 + asp_boost)",
+    value="ranking_score * (1 + pop_boost)",
     height=80
 )
 
 formula_b = st.sidebar.text_area(
     "Formula B",
-    value="ranking_score * (1 + 2 * asp_boost)",
+    value="ranking_score * (1 + 1.5 * asp_boost)",
     height=80
 )
 
@@ -86,9 +97,18 @@ st.sidebar.markdown(
 - ranking_score
 - asp_boost
 - pop_boost
+- asp
+- med_asp
+- p25_asp
+- sku_pop
+- brand_pop
 
 **Allowed operators**
 +  -  *  /  ( )
+
+**Allowed functions**
+min(a, b)
+max(a, b)
 """
 )
 
@@ -100,6 +120,10 @@ ALLOWED_OPERATORS = {
     ast.Sub: op.sub,
     ast.Mult: op.mul,
     ast.Div: op.truediv,
+}
+ALLOWED_FUNCTIONS = {
+    "min": lambda a, b: a.combine(b, min) if hasattr(a, "combine") else min(a, b),
+    "max": lambda a, b: a.combine(b, max) if hasattr(a, "combine") else max(a, b),
 }
 
 def safe_eval_expr(expr, variables):
@@ -125,6 +149,24 @@ def safe_eval_expr(expr, variables):
                 return -_eval(node.operand)
             raise TypeError("Unary operator not allowed")
 
+        # Function calls (min(a,b), max(a,b))
+        elif isinstance(node, ast.Call):
+            if not isinstance(node.func, ast.Name):
+                raise TypeError("Only simple function calls allowed")
+
+            func_name = node.func.id
+
+            if func_name not in ALLOWED_FUNCTIONS:
+                raise ValueError(f"Function '{func_name}' not allowed")
+
+            args = [_eval(arg) for arg in node.args]
+
+            if len(args) != 2:
+                raise ValueError("Only two-argument min/max supported")
+
+            return ALLOWED_FUNCTIONS[func_name](*args)
+
+
         else:
             raise TypeError("Unsupported expression")
 
@@ -132,13 +174,18 @@ def safe_eval_expr(expr, variables):
     return _eval(parsed.body)
 
 
-def evaluate_formula(df, expr):
+def evaluate_formula(filtered_df, expr):
     return safe_eval_expr(
         expr,
         {
-            "ranking_score": df["ranking_score"],
-            "asp_boost": df["asp_boost"],
-            "pop_boost": df["pop_boost"],
+            "ranking_score": filtered_df["ranking_score"],
+            "asp_boost": filtered_df["asp_boost"],
+            "pop_boost": filtered_df["pop_boost"],
+            "asp": filtered_df["selling_price"],
+            "med_asp": filtered_df["med_asp"],
+            "p25_asp": filtered_df["p25_asp"],
+            "sku_pop": filtered_df["sku_pop"],
+            "brand_pop": filtered_df["brand_pop"]
         }
     )
 
@@ -195,14 +242,25 @@ display_cols = [
     "rank_b",
     "rank_delta",
     "pop_boost",
-    "asp_boost"
+    "asp_boost",
+    "med_asp",
+    "p25_asp",
+    "sku_pop",
+    "brand_pop"
 ]
 
 st.dataframe(
     topk_df[display_cols]
         .sort_values("rank_a")
         .reset_index(drop=True),
-    use_container_width=True
+    use_container_width=True,
+    hide_index=True,
+    column_config={
+        "product_name": st.column_config.TextColumn(
+            "Product Name",
+            pinned=True,   # 👈 This pins the column
+        )
+    }
 )
 
 # -----------------------------
@@ -214,8 +272,8 @@ col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     overlap = len(
-        set(df_sim[df_sim["rank_a"] <= top_k]["product_variant_id"])
-        & set(df_sim[df_sim["rank_b"] <= top_k]["product_variant_id"])
+        set(topk_df[topk_df["rank_a"] <= top_k]["product_variant_id"])
+        & set(topk_df[topk_df["rank_b"] <= top_k]["product_variant_id"])
     )
     st.metric("Top-K Overlap", f"{overlap}/{top_k}")
 
