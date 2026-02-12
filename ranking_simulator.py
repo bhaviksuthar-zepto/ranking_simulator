@@ -299,7 +299,16 @@ styled_df = display_df.style.map(
     green_gradient,
     subset=["rank_a", "rank_b"]
 )
+if is_dark:
+    styled_df = styled_df.set_table_styles([
+        {
+            "selector": "td",
+            "props": [("color", "white")]
+        }
+    ])
 
+# Render styled table (use st.write for full CSS support)
+st.write(styled_df)
 st.dataframe(
     styled_df,
     use_container_width=True,
