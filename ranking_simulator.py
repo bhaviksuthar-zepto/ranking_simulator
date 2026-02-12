@@ -249,6 +249,13 @@ display_cols = [
     "brand_pop"
 ]
 
+topk_df = topk_df.style.background_gradient(
+    subset=["rank_a", "rank_b"],
+    cmap="Greens_r",   # reversed so 1 = darkest green
+    vmin=1,
+    vmax=top_k
+)
+
 st.dataframe(
     topk_df[display_cols]
         .sort_values("rank_a")
