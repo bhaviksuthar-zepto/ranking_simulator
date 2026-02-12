@@ -260,19 +260,30 @@ display_df = (
 )
 
 def green_gradient(val):
-    if val > top_k:
+    try:
+        if pd.isna(val):
+            return ""
+
+        val = int(val)
+
+        if top_k <= 1:
+            return ""
+
+        if val > top_k:
+            return ""
+
+        intensity = 1 - ((val - 1) / (top_k - 1))
+        intensity = max(0, min(1, intensity))  # clamp 0–1
+
+        if is_dark:
+            green = int(120 + (135 * intensity))
+            return f"background-color: rgb(0, {green}, 0); color: white"
+        else:
+            green = int(200 + (55 * intensity))
+            return f"background-color: rgb(220, {green}, 220); color: black"
+
+    except Exception:
         return ""
-
-    intensity = 1 - ((val - 1) / (top_k - 1))
-
-    if is_dark:
-        # Brighter green for dark background
-        green = int(120 + (135 * intensity))   # 120–255
-        return f"background-color: rgb(0, {green}, 0); color: white"
-    else:
-        # Softer green for light background
-        green = int(200 + (55 * intensity))    # 200–255
-        return f"background-color: rgb(220, {green}, 220); color: black"
 
 
 styled_df = display_df.style.map(
