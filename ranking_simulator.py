@@ -258,11 +258,10 @@ styled_df = (
 # Apply gradient (green = low rank, red = high rank)
 styled_df = styled_df.style.background_gradient(
     subset=["rank_a", "rank_b"],
-    cmap="RdYlGn_r",   # reversed so 1 = green
+    cmap="Greens_r",   # reversed so 1 = green
     vmin=1,
     vmax=10
 )
-
 
 st.dataframe(
     styled_df,
@@ -271,7 +270,7 @@ st.dataframe(
     column_config={
         "product_name": st.column_config.TextColumn(
             "Product Name",
-            pinned=True,   # 👈 This pins the column
+            pinned=True,
         )
     }
 )
