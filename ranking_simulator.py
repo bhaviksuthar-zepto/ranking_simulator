@@ -258,6 +258,7 @@ display_df = (
         .sort_values("rank_a")
         .reset_index(drop=True)
 )
+is_dark = st.get_option("theme.base") == "dark"
 
 def green_gradient(val):
     try:
