@@ -264,20 +264,19 @@ st.dataframe(
             "Product Name",
             pinned=True,
         ),
-        "rank_a": st.column_config.NumberColumn(
+        "rank_a": st.column_config.ProgressColumn(
             "Rank A",
             min_value=1,
             max_value=top_k,
-            format="%d"
         ),
-        "rank_b": st.column_config.NumberColumn(
+        "rank_b": st.column_config.ProgressColumn(
             "Rank B",
             min_value=1,
             max_value=top_k,
-            format="%d"
         ),
     }
 )
+
 
 # -----------------------------
 # Summary Metrics
