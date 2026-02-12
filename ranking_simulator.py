@@ -255,27 +255,29 @@ display_df = (
         .reset_index(drop=True)
 )
 
-st.dataframe(
-    display_df,
-    use_container_width=True,
-    hide_index=True,
-    column_config={
-        "product_name": st.column_config.TextColumn(
-            "Product Name",
-            pinned=True,
-        ),
-        "rank_a": st.column_config.ProgressColumn(
-            "Rank A",
-            min_value=1,
-            max_value=top_k,
-        ),
-        "rank_b": st.column_config.ProgressColumn(
-            "Rank B",
-            min_value=1,
-            max_value=top_k,
-        ),
-    }
+def green_gradient(val):
+    if val > top_k:
+        return "background-color: #f2f2f2"  # light grey for outside Top-K
+    
+    # Normalize (1 = darkest)
+    intensity = 1 - ((val - 1) / (top_k - 1))
+    
+    # Convert intensity to green shade
+    green_value = int(255 * intensity)
+    
+    return f"background-color: rgb(0, {green_value}, 0); color: black"
+
+styled_df = display_df.style.map(
+    green_gradient,
+    subset=["rank_a", "rank_b"]
 )
+
+st.dataframe(
+    styled_df,
+    use_container_width=True,
+    hide_index=True
+)
+
 
 
 # -----------------------------
