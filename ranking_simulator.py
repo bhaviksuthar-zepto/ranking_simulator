@@ -278,8 +278,8 @@ def green_gradient(val):
         alpha = 0.05 + (0.45 * intensity)
 
         if is_dark:
-            green = int(120 + (135 * intensity))
-            return f"background-color: rgb(0, {green}, 0); color: white"
+            green = int(60 + (125 * intensity))   # softer ramp
+            return f"background-color: rgb(16, {green}, 129); color: white"
         else:
             alpha = 0.05 + (0.45 * intensity)
             return f"background-color: rgba(0, 128, 0, {alpha}); color: black"
