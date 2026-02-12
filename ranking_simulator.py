@@ -275,13 +275,14 @@ def green_gradient(val):
 
         intensity = 1 - ((val - 1) / (top_k - 1))
         intensity = max(0, min(1, intensity))  # clamp 0–1
+        alpha = 0.05 + (0.45 * intensity)
 
         if is_dark:
             green = int(120 + (135 * intensity))
             return f"background-color: rgb(0, {green}, 0); color: white"
         else:
-            green = int(200 + (55 * intensity))
-            return f"background-color: rgb(220, {green}, 220); color: black"
+            alpha = 0.05 + (0.45 * intensity)
+            return f"background-color: rgba(0, 128, 0, {alpha}); color: black"
 
     except Exception:
         return ""
