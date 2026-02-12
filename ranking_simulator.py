@@ -307,8 +307,6 @@ if is_dark:
         }
     ])
 
-# Render styled table (use st.write for full CSS support)
-st.write(styled_df)
 st.dataframe(
     styled_df,
     use_container_width=True,
