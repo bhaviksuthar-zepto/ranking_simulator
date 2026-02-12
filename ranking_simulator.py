@@ -257,15 +257,15 @@ display_df = (
 
 def green_gradient(val):
     if val > top_k:
-        return "background-color: #f2f2f2"  # light grey for outside Top-K
+        return ""  # no color outside Top-K
     
-    # Normalize (1 = darkest)
+    # Normalize rank (1 = strongest)
     intensity = 1 - ((val - 1) / (top_k - 1))
     
-    # Convert intensity to green shade
-    green_value = int(255 * intensity)
+    # Alpha controls transparency (0.05 → 0.5 smooth fade)
+    alpha = 0.05 + (0.45 * intensity)
     
-    return f"background-color: rgb(0, {green_value}, 0); color: black"
+    return f"background-color: rgba(0, 128, 0, {alpha}); color: black"
 
 styled_df = display_df.style.map(
     green_gradient,
