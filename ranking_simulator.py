@@ -278,8 +278,15 @@ def green_gradient(val):
         alpha = 0.05 + (0.45 * intensity)
 
         if is_dark:
-            green = int(60 + (125 * intensity))   # softer ramp
-            return f"background-color: rgb(16, {green}, 129); color: white"
+            # Emerald green scale (dark-mode friendly)
+            # Base: #0F766E → Strong: #10B981
+            green = int(118 + (67 * intensity))   # 118 → 185
+            blue = int(110 + (19 * intensity))    # 110 → 129
+
+            return (
+                f"background-color: rgb(16, {green}, {blue}); "
+                f"color: white; font-weight: 600;"
+            )
         else:
             alpha = 0.05 + (0.45 * intensity)
             return f"background-color: rgba(0, 128, 0, {alpha}); color: black"
