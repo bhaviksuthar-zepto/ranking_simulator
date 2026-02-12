@@ -249,29 +249,33 @@ display_cols = [
     "brand_pop"
 ]
 
-styled_df = (
+display_df = (
     topk_df[display_cols]
         .sort_values("rank_a")
         .reset_index(drop=True)
 )
 
-# Apply gradient (green = low rank, red = high rank)
-styled_df = styled_df.style.background_gradient(
-    subset=["rank_a", "rank_b"],
-    cmap="Greens_r",   # reversed so 1 = green
-    vmin=1,
-    vmax=10
-)
-
 st.dataframe(
-    styled_df,
+    display_df,
     use_container_width=True,
     hide_index=True,
     column_config={
         "product_name": st.column_config.TextColumn(
             "Product Name",
             pinned=True,
-        )
+        ),
+        "rank_a": st.column_config.NumberColumn(
+            "Rank A",
+            min_value=1,
+            max_value=top_k,
+            format="%d"
+        ),
+        "rank_b": st.column_config.NumberColumn(
+            "Rank B",
+            min_value=1,
+            max_value=top_k,
+            format="%d"
+        ),
     }
 )
 
