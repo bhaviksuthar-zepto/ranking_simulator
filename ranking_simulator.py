@@ -224,7 +224,7 @@ df_sim["rank_delta"] = df_sim["rank_b"] - df_sim["rank_a"]
 # -----------------------------
 df_sim["rank_a"] = df_sim["rank_a"].astype(int)
 df_sim["rank_b"] = df_sim["rank_b"].astype(int)
-df_sim["rank_delta"] = df_sim["rank_delta"].astype(int)
+df_sim["rank_delta"] = (-1)*df_sim["rank_delta"].astype(int)
 
 topk_df = df_sim[
     (df_sim["rank_a"] <= top_k) | (df_sim["rank_b"] <= top_k)
